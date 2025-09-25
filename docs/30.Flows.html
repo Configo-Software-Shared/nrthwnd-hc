@@ -1,0 +1,156 @@
+<html lang="en" style="padding: 20px">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="shortcut icon" type="image/png" href="images/favicon.png" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.9.3/semantic.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.datatables.net/v/se/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-colvis-3.0.2/b-html5-3.0.2/b-print-3.0.2/cr-2.0.2/date-1.5.2/fc-5.0.0/fh-4.0.1/kt-2.12.0/r-3.0.2/rg-1.5.0/sc-2.4.2/sb-1.7.1/sp-2.3.1/datatables.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.9.3/semantic.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/v/se/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-colvis-3.0.2/b-html5-3.0.2/b-print-3.0.2/cr-2.0.2/date-1.5.2/fc-5.0.0/fh-4.0.1/kt-2.12.0/r-3.0.2/rg-1.5.0/sc-2.4.2/sb-1.7.1/sp-2.3.1/datatables.min.js"></script>
+    <script type="text/javascript" src="script/cfg-tables.js"></script>
+    <script type="text/javascript" src="30.Flows.js"></script>
+    <title>Flows</title>
+  </head>
+  <body>
+    <h2 class="ui header">Flow Summary</h2>
+    <table id="flow-summary" class="ui responsive celled table">
+      <thead>
+        <tr class="header">
+          <th>Flow type</th>
+          <th>Total</th>
+          <th>Active</th>
+        </tr>
+      </thead>
+    </table>
+    <h2 class="ui header">Flows</h2>
+    <table id="flows" class="ui responsive celled table">
+      <thead>
+        <tr class="header">
+          <th>Name</th>
+          <th>Description</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Trigger</th>
+          <th>Components</th>
+        </tr>
+      </thead>
+    </table>
+    <script>
+      function renderFlowCount(
+        detailTableId,
+        typeIndex,
+        statusIndex,
+        statusValue
+      ) {
+        return function (data, type, row, meta) {
+          if (type !== "display" || !row || !row.type || data === 0)
+            return data;
+
+          const name = row.type;
+          const safeName = String(name).replace(/"/g, "&quot;");
+          const secondFilter =
+            (
+              typeof statusIndex === "number" &&
+              typeof statusValue === "string" &&
+              statusValue.length > 0
+            ) ?
+              `setColumnFilter('${detailTableId}', ${statusIndex}, '${statusValue}');`
+            : "";
+          return `<a href="#" onclick="
+            clearAllFilters('${detailTableId}');
+            setColumnFilter('${detailTableId}', ${typeIndex}, '/^${safeName}$');
+            ${secondFilter}
+            scrollTableIntoView('${detailTableId}');
+            return false;
+          ">${data}</a>`;
+        };
+      }
+
+      function renderLabelAndFullName(data, type, row, meta) {
+        if (type !== "display")
+          return data?.label + " (" + data?.fullName + ")";
+
+        const fullName = data.fullName;
+        const label = data.label;
+        // Escape for HTML
+        const safeFullName = String(fullName).replace(/"/g, "&quot;");
+        const safeLabel = String(label).replace(/"/g, "&quot;");
+        return `<div>${safeLabel}</div><div class="ui gray label">${safeFullName}</div>`;
+      }
+
+      function renderTrigger(data, type, row, meta) {
+        if (!data) {
+          return null;
+        }
+
+        if (type !== "display") {
+          return data?.type + " (" + data?.object + ")";
+        }
+
+        return `<div>${data?.type}</div>${data?.object ? `<div class="ui blue label">${data?.object}</div>` : ""}`;
+      }
+
+      function renderComponents(data, type) {
+        if (typeof data === "object" && data !== null && !Array.isArray(data)) {
+          const keys = Object.keys(data).sort();
+          if (type === "display") {
+            return `<div class="ui list">${keys.map((key) => `<div class="item">${key}: ${data[key]}</div>`).join("")}</div>`;
+          } else {
+            return keys.join("||");
+          }
+        }
+        return null;
+      }
+
+      $(document).ready(function () {
+        initDataTableWithButtons("#flow-summary", "Flow Summary", true, true, {
+          data: flowSummaryData,
+          columns: [
+            { data: "type", title: "Flow type" },
+            {
+              data: "total",
+              title: "Total",
+              render: renderFlowCount("#flows", 2),
+            },
+            {
+              data: "active",
+              title: "Active",
+              render: renderFlowCount("#flows", 2, 3, "Active"),
+            },
+          ],
+          pageLength: 20,
+          lengthMenu: [20, 40, 70, 100],
+        });
+
+        initDataTableWithButtons("#flows", "Flows", true, true, {
+          data: flowData,
+          columns: [
+            { data: "name", title: "Name", render: renderLabelAndFullName },
+            { data: "description", title: "Description" },
+            { data: "type", title: "Flow type" },
+            { data: "status", title: "Status" },
+            { data: "trigger", title: "Trigger", render: renderTrigger },
+            {
+              data: "components",
+              title: "Components",
+              render: renderComponents,
+            },
+          ],
+          pageLength: 20,
+          lengthMenu: [20, 40, 70, 100],
+        });
+      });
+    </script>
+  </body>
+</html>

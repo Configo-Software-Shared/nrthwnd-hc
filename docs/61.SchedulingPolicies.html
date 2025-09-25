@@ -1,0 +1,169 @@
+<html lang="en" style="padding: 20px" xmlns="http://www.w3.org/1999/xhtml" xmlns:xoom="urn:xmlns:zanyants:xoom">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="shortcut icon" type="image/png" href="images/favicon.png" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.9.3/semantic.min.css" xmlns="" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/se/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-colvis-3.0.2/b-html5-3.0.2/b-print-3.0.2/cr-2.0.2/date-1.5.2/fc-5.0.0/fh-4.0.1/kt-2.12.0/r-3.0.2/rg-1.5.0/sc-2.4.2/sb-1.7.1/sp-2.3.1/datatables.min.css" xmlns="" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" xmlns="">//</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.9.3/semantic.min.js" xmlns="">//</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" xmlns="">//</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" xmlns="">//</script>
+    <script src="https://cdn.datatables.net/v/se/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-colvis-3.0.2/b-html5-3.0.2/b-print-3.0.2/cr-2.0.2/date-1.5.2/fc-5.0.0/fh-4.0.1/kt-2.12.0/r-3.0.2/rg-1.5.0/sc-2.4.2/sb-1.7.1/sp-2.3.1/datatables.min.js" xmlns="">//</script>
+    <script type="text/javascript" src="script/cfg-tables.js" xmlns="">//</script>
+    <title>FSL Scheduling Policy matrix</title>
+  </head>
+  <body>
+    <h1>Scheduling Policies</h1>
+    <table id="policies" class="ui responsive collapsing celled table">
+      <thead>
+        <tr class="header">
+          <th>Name</th>
+          <th>Description</th>
+          <th>Clustering Weight</th>
+          <th>Priority Weight</th>
+          <th>Travel Mode</th>
+          <th>Commit Mode</th>
+          <th>Daily Optimization</th>
+          <th>Fix Overlaps</th>
+        </tr>
+      </thead>
+      <tbody />
+    </table>
+    <h1>Scheduling Policy matrix</h1>
+    <table id="policy-matrix" class="ui collapsing celled table">
+      <thead>
+        <tr>
+          <th />
+        </tr>
+      </thead>
+      <tdata>
+        <tr>
+          <th class="left" colspan="1">
+            <b>Work Rules</b>
+          </th>
+        </tr>
+        <tr>
+          <th class="left" colspan="1">
+            <b>Goals</b>
+          </th>
+        </tr>
+      </tdata>
+    </table>
+    <h1>Work Rules</h1>
+    <table id="work-rules" class="ui responsive collapsing celled table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Active</th>
+          <th>Boolean Operator</th>
+          <th>Break Duration</th>
+          <th>Break Start</th>
+          <th>Description</th>
+          <th>Enable Overtime</th>
+          <th>Evaluation Order</th>
+          <th>Is Fixed Gap</th>
+          <th>Match Constant Boolean Value</th>
+          <th>Match Skill Level</th>
+          <th>Maximum Travel From Home Type</th>
+          <th>Maximum Travel From Home</th>
+          <th>Minimum Gap</th>
+          <th>Object Group Field</th>
+          <th>Pass Empty Values</th>
+          <th>Resource Group Field</th>
+          <th>Resource Property</th>
+          <th>Service Property</th>
+          <th>Service Schedule Time Property</th>
+          <th>Service Time Operator</th>
+          <th>Service Time Property</th>
+          <th>Start of Day</th>
+          <th>Travel From Home</th>
+          <th>Travel To Home</th>
+          <th>Working Location Enable Primary</th>
+          <th>Crew Resources Availability</th>
+          <th>Enhanced Match Linking Object</th>
+          <th>Service Appointment Matching Field</th>
+          <th>Service Linking Object Reference Field</th>
+          <th>WorkRule End DateTime Field</th>
+          <th>WorkRule Start DateTime Field</th>
+          <th>Is Time-Phased</th>
+        </tr>
+      </thead>
+      <tdata />
+    </table>
+    <h1 class="header">Service Goals</h1>
+    <table id="svc-goals" class="ui responsive collapsing celled table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Object Group Field</th>
+          <th>Prioritize Resource</th>
+          <th>Resource Group Field</th>
+          <th>Resource Priority Field</th>
+          <th>Ignore Home Base Coordinates</th>
+        </tr>
+      </thead>
+      <tdata />
+    </table>
+    <script>
+      $( document ).ready( function ()
+        {
+          initDataTableWithButtons(
+            '#policies',
+            'Scheduling Policies',
+            true,
+            true,
+            {},
+            true,
+          );
+
+          initDataTableWithButtons(
+            '#work-rules',
+            'Work Rules',
+            true,
+            true,
+            {},
+            true,
+          );
+
+          initDataTableWithButtons(
+            '#svc-goals',
+            'Service Goals / Objectives',
+            true,
+            true,
+            {},
+            true,
+          );
+
+          // Hide rows in #policy-matrix where all columns except the first are empty
+          let unusedRulesAndObjectives = [];
+          $('#policy-matrix tbody tr').each(function() {
+            var $cells = $(this).find('td');
+            if ($cells.length < 2) return; // Skip rows with less than 2 cells, these are rule and objective headers
+
+            // Check if all cells except the first are empty
+            var allEmpty = true;
+            $cells.slice(1).each(function() {
+              if ($(this).text().trim() !== '') {
+                allEmpty = false;
+                return false; // break
+              }
+            });
+            if (allEmpty) {
+              $(this).hide();
+              unusedRulesAndObjectives.push($cells.first().text().trim());
+            }
+          });
+          // If there are unused rules or objectives, display a list
+          if (unusedRulesAndObjectives.length > 0) {
+            $('#policy-matrix').after(
+              '<div class="ui warning message"><div class="header">Unused Rules and Objectives</div>' +
+              '<p>The following rules and objectives are not used by any scheduling policies: ' +
+              unusedRulesAndObjectives.join(', ') + '</p></div>'
+            );
+          }
+        } );</script>
+  </body>
+</html>

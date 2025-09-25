@@ -1,0 +1,184 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="shortcut icon" type="image/png" href="images/favicon.png" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.9.3/semantic.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/se/jq-3.7.0/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-colvis-3.0.2/b-html5-3.0.2/b-print-3.0.2/cr-2.0.2/date-1.5.2/fc-5.0.0/fh-4.0.1/kt-2.12.0/r-3.0.2/rg-1.5.0/sc-2.4.2/sb-1.7.1/sp-2.3.1/datatables.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js">//</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.9.3/semantic.min.js">//</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js">//</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js">//</script>
+    <script src="https://cdn.datatables.net/v/se/jq-3.7.0/jszip-3.10.1/dt-2.0.7/b-3.0.2/b-colvis-3.0.2/b-html5-3.0.2/b-print-3.0.2/cr-2.0.2/date-1.5.2/fc-5.0.0/fh-4.0.1/kt-2.12.0/r-3.0.2/rg-1.5.0/sc-2.4.2/sb-1.7.1/sp-2.3.1/datatables.min.js">//</script>
+    <script type="text/javascript" src="script/cfg-tables.js">//</script>
+    <script type="text/javascript" src="xomIndex.js">//</script>
+    <title>Snapshot Summary</title>
+  </head>
+  <body style="padding:16px">
+    <h2>Types</h2>
+    <table id="typesTable" class="ui celled table" style="width:100%">
+      <thead>
+        <tr class="header">
+          <th>Type</th>
+          <th>Items</th>
+          <th>References</th>
+          <th>Unresolved</th>
+        </tr>
+      </thead>
+      <tbody />
+    </table>
+    <h2>Collections</h2>
+    <table id="collectionsTable" class="ui celled table" style="width:100%">
+      <thead>
+        <tr class="header">
+          <th>Type</th>
+          <th>Items</th>
+          <th>References</th>
+          <th>Unresolved</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>SObjects (metadata)</td>
+          <td>2369</td>
+          <td>91495</td>
+          <td>18221</td>
+        </tr>
+        <tr>
+          <td>FieldPermissions</td>
+          <td>385258</td>
+          <td>867481</td>
+          <td>499</td>
+        </tr>
+        <tr>
+          <td>Group</td>
+          <td>136</td>
+          <td>492</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>GroupMember</td>
+          <td>163</td>
+          <td>326</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>md.Flow</td>
+          <td>334</td>
+          <td>311</td>
+          <td>52</td>
+        </tr>
+        <tr>
+          <td>md.FlowDefinition</td>
+          <td>331</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>mt.MetadataType</td>
+          <td>232</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>MutingPermissionSet</td>
+          <td>1</td>
+          <td>2</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>ObjectPermissions</td>
+          <td>31726</td>
+          <td>114859</td>
+          <td>12045</td>
+        </tr>
+        <tr>
+          <td>PermissionSet</td>
+          <td>1289</td>
+          <td>2058</td>
+          <td>756</td>
+        </tr>
+        <tr>
+          <td>PermissionSetAssignment</td>
+          <td>2766</td>
+          <td>6368</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>PermissionSetGroup</td>
+          <td>60</td>
+          <td>86</td>
+          <td>34</td>
+        </tr>
+        <tr>
+          <td>PermissionSetGroupComponent</td>
+          <td>718</td>
+          <td>2587</td>
+          <td>285</td>
+        </tr>
+        <tr>
+          <td>PermissionSetLicense</td>
+          <td>60</td>
+          <td>0</td>
+          <td>120</td>
+        </tr>
+        <tr>
+          <td>PermissionSetTabSetting</td>
+          <td>5792</td>
+          <td>5340</td>
+          <td>452</td>
+        </tr>
+        <tr>
+          <td>Profile</td>
+          <td>31</td>
+          <td>83</td>
+          <td>10</td>
+        </tr>
+        <tr>
+          <td>User</td>
+          <td>1633</td>
+          <td>6589</td>
+          <td>56</td>
+        </tr>
+        <tr>
+          <td>UserLicense</td>
+          <td>14</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+      </tbody>
+    </table>
+    <script>
+      var types = Object.values( xomIndex.items )
+        .reduce( function ( typeSummary, item ) {
+          item.identities.forEach( function( id ) {
+            var typeInfo = ( typeSummary[ id.type ] = typeSummary[ id.type ] || { count: 0, dependencies: 0, unresolved: 0 } );
+            typeInfo.count ++;
+            typeInfo.dependencies += ( item.dependencies?.length || 0 );
+            typeInfo.unresolved += ( item.unresolvedReferences?.length || 0 );
+          } );
+          return typeSummary;
+        }, {} );
+
+      var itemsData = Object.keys( types )
+        .map( function ( typeName ) {
+          var typeInfo = types[ typeName ];
+          return [
+            typeName,
+            typeInfo.count,
+            typeInfo.dependencies,
+            typeInfo.unresolved
+          ];
+        } );
+
+      $( document ).ready( function ()
+      {
+        $( '#typesTable' ).DataTable( {
+          data: itemsData
+        } );
+
+        $( '#collectionsTable' ).DataTable();
+      } );
+</script>
+  </body>
+</html>
