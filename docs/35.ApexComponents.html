@@ -74,6 +74,36 @@
         apiVersions: Array.from(summary.apiVersions).sort(),
       }));
 
+      function renderClassCount(
+        detailTableId,
+        nsIndex,
+        statusIndex,
+        statusValue
+      ) {
+        return function (data, type, row, meta) {
+          if (type !== "display" || !row || data === 0) return data;
+
+          const ns = row.namespace;
+          const filterValue =
+            String(ns) == "" ? "((?!__).)*$" : `${String(ns)}__.+`;
+          const secondFilter =
+            (
+              typeof statusIndex === "number" &&
+              typeof statusValue === "string" &&
+              statusValue.length > 0
+            ) ?
+              `setColumnFilter('${detailTableId}', ${statusIndex}, '${statusValue}');`
+            : "";
+          return `<a href="#" onclick="
+            clearAllFilters('${detailTableId}');
+            setColumnFilter('${detailTableId}', ${nsIndex}, '/^${filterValue}$');
+            ${secondFilter}
+            scrollTableIntoView('${detailTableId}');
+            return false;
+          ">${data}</a>`;
+        };
+      }
+
       $(document).ready(function () {
         initDataTableWithButtons(
           "#class-summary",
@@ -84,8 +114,16 @@
             data: classSummaryData,
             columns: [
               { data: "namespace", title: "Namespace" },
-              { data: "total", title: "Total" },
-              { data: "active", title: "Active" },
+              {
+                data: "total",
+                title: "Total",
+                render: renderClassCount("#classes", 0),
+              },
+              {
+                data: "active",
+                title: "Active",
+                render: renderClassCount("#classes", 0, 1, "Active"),
+              },
               {
                 data: "apiVersions",
                 title: "API versions",
