@@ -90,6 +90,8 @@
       <thead>
         <tr class="header">
           <th>Flow</th>
+          <th>Flow Type</th>
+          <th>Status</th>
           <th>Violated Rule</th>
           <th>Details</th>
           <th>Severity</th>
@@ -421,6 +423,8 @@
             data: flowBestPracticeData,
             columns: [
               { data: "flow", title: "Flow", render: renderLabelAndFullName },
+              { data: "flow.type", title: "Flow Type" },
+              { data: "flow.status", title: "Status" },
               { data: "rule", title: "Violated Rule" },
               { data: "details", title: "Details", render: renderDetails },
               {
