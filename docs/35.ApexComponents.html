@@ -87,11 +87,13 @@
           const filterValue =
             String(ns) == "" ? "((?!__).)*" : `${String(ns)}__.+`;
           const secondFilter =
-            typeof statusIndex === "number" &&
-            typeof statusValue === "string" &&
-            statusValue.length > 0
-              ? `setColumnFilter('${detailTableId}', ${statusIndex}, '${statusValue}');`
-              : "";
+            (
+              typeof statusIndex === "number" &&
+              typeof statusValue === "string" &&
+              statusValue.length > 0
+            ) ?
+              `setColumnFilter('${detailTableId}', ${statusIndex}, '${statusValue}');`
+            : "";
           return `<a href="#" onclick="
             clearAllFilters('${detailTableId}');
             setColumnFilter('${detailTableId}', ${nsIndex}, '/^${filterValue}$');
