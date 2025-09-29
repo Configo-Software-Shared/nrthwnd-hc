@@ -111,6 +111,38 @@
         };
       }
 
+      function renderJunction(data, type, row, meta) {
+        const junction = row ? row.junction : null;
+        if (!junction) {
+          return null;
+        }
+        if (type !== "display") {
+          return junction;
+        }
+        const lists = Array.isArray(junction.idListNames)
+          ? junction.idListNames
+              .map(
+                (name) => `<div class="ui secondary basic label">${name}</div>`
+              )
+              .join("")
+          : "";
+        const refs = Array.isArray(junction.referenceTo)
+          ? junction.referenceTo
+              .map(
+                (target) =>
+                  `<a class="ui primary basic label" onclick="addAndDisplayDetails('${target}', false, false)" ondblclick="addAndDisplayDetails('${target}', true, true)"><i class="arrow right icon"></i>${target}</a>`
+              )
+              .join("")
+          : "";
+        const listsSection = lists
+          ? `<div>lists <span class="ui labels">${lists}</span></div>`
+          : "";
+        const refsSection = refs
+          ? `<div style="margin-top: 4px;">references <span class="ui labels">${refs}</span></div>`
+          : "";
+        return `<div>${listsSection}${refsSection}</div>`;
+      }
+
       function decodePicklistText(value) {
         // Safely decode URL-encoded sequences like %28 %29; fall back on original if invalid
         try {
@@ -487,7 +519,7 @@
                       ),
                     },
                   ],
-                  pageLength: 50,
+                  pageLength: 10,
                 }
               );
             } else if ($.fn.DataTable.isDataTable(this)) {
@@ -537,13 +569,13 @@
                     {
                       data: null,
                       type: "string",
-                      render: renderOptionalValue("junctionObject"),
+                      render: renderJunction,
                       visible: data.childRelationships.some(
                         (relationship) => relationship.junction
                       ),
                     },
                   ],
-                  pageLength: 20,
+                  pageLength: 10,
                 }
               );
             } else if ($.fn.DataTable.isDataTable(this)) {
@@ -612,7 +644,7 @@
                       ),
                     },
                   ],
-                  pageLength: 20,
+                  pageLength: 10,
                 }
               );
             } else if ($.fn.DataTable.isDataTable(this)) {
@@ -635,7 +667,7 @@
                     { data: "label", type: "string" },
                     { data: "name", type: "string" },
                   ],
-                  pageLength: 20,
+                  pageLength: 10,
                 }
               );
             } else if ($.fn.DataTable.isDataTable(this)) {
