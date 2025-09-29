@@ -466,9 +466,21 @@
               { data: "label" },
               { data: "keyPrefix" },
               { data: null, render: renderPropertyCount("fields") },
-              { data: null, render: renderPropertyCount("actionOverrides") },
-              { data: null, render: renderPropertyCount("supportedScopes") },
-              { data: null, render: renderPropertyCount("validationRules") },
+              {
+                data: null,
+                type: "num",
+                render: renderPropertyCount("actionOverrides"),
+              },
+              {
+                data: null,
+                type: "num",
+                render: renderPropertyCount("supportedScopes"),
+              },
+              {
+                data: null,
+                type: "num",
+                render: renderPropertyCount("validationRules"),
+              },
               { data: "customObject", visible: false },
             ],
           }
