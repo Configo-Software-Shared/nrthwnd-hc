@@ -41,6 +41,8 @@
           <th>Label</th>
           <th>Key Prefix</th>
           <th>Fields</th>
+          <th>Action Overrides</th>
+          <th>Supported Scopes</th>
           <th>Validation Rules</th>
           <th>Customized</th>
         </tr>
@@ -66,9 +68,9 @@
           return (
             `<div style="display: flex; align-items: center; gap: 8px;">
               <div class="name">${data}</div>` +
-            (row.customObject ?
-              `<div class="ui basic tiny green label">customized</div>`
-            : "") +
+            (row.customObject
+              ? `<div class="ui basic tiny green label">customized</div>`
+              : "") +
             `</div>`
           );
         } else {
@@ -87,22 +89,15 @@
         }
       }
 
-      function renderFieldCount(data, type, row, meta) {
-        const count = row.fields ? row.fields.length : 0;
-        if (type === "display") {
-          return count;
-        } else {
-          return count;
-        }
-      }
-
-      function renderValidationRuleCount(data, type, row, meta) {
-        const count = row.validationRules ? row.validationRules.length : 0;
-        if (type === "display") {
-          return count;
-        } else {
-          return count;
-        }
+      function renderPropertyCount(propertyName) {
+        return function (data, type, row, meta) {
+          const count = row[propertyName] ? row[propertyName].length : 0;
+          if (type === "display") {
+            return count;
+          } else {
+            return count;
+          }
+        };
       }
 
       // Object Schema specific content generation
@@ -244,6 +239,39 @@
 
         let fieldsSectionFooter = "</tbody></table>";
 
+        let actionOverridesSection = "";
+        if (data.actionOverrides && data.actionOverrides.length > 0) {
+          linksSection += `<div class="item"><a href="#${tabId}-action-overrides">Action Overrides</a></div>`;
+
+          actionOverridesSection = `<h3 class='ui header' id='${tabId}-action-overrides'>Action Overrides<a href="#${tabId}" style="float: right; font-size: 0.8em; font-weight: normal;"><i class="up arrow icon"></i>top</a></h3>
+          <table id='${tabId}-action-overrides-table' class="ui celled table">
+            <thead>
+              <tr class="header">
+                <th>Form Factor</th>
+                <th>Available In Touch</th>
+                <th>Action Name</th>
+                <th>Page</th>
+                <th>URL</th>
+              </tr>
+            </thead>
+          </table>`;
+        }
+
+        let supportedScopesSection = "";
+        if (data.supportedScopes && data.supportedScopes.length > 0) {
+          linksSection += `<div class="item"><a href="#${tabId}-supported-scopes">Supported Scopes</a></div>`;
+
+          supportedScopesSection = `<h3 class='ui header' id='${tabId}-supported-scopes'>Supported Scopes<a href="#${tabId}" style="float: right; font-size: 0.8em; font-weight: normal;"><i class="up arrow icon"></i>top</a></h3>
+          <table id='${tabId}-supported-scopes-table' class="ui celled table">
+            <thead>
+              <tr class="header">
+                <th>Label</th>
+                <th>API Name</th>
+              </tr>
+            </thead>
+          </table>`;
+        }
+
         let validationRulesSection = "";
         if (data.validationRules && data.validationRules.length > 0) {
           linksSection += `<div class="item"><a href="#${tabId}-validation-rules">Validation Rules</a></div>`;
@@ -271,6 +299,8 @@
           fieldsSectionHeader +
           fieldsSection +
           fieldsSectionFooter +
+          actionOverridesSection +
+          supportedScopesSection +
           validationRulesSection
         );
       }
@@ -297,6 +327,55 @@
             $(this).DataTable().columns.adjust();
           }
         });
+
+        if (data.supportedScopes && data.supportedScopes.length > 0) {
+          $(`#${tabId}-supported-scopes-table`).each(function () {
+            if ($.fn.dataTable && !$.fn.dataTable.isDataTable(this)) {
+              initDataTableWithButtons(
+                `#${this.id}`,
+                `Supported Scopes for ${data.name}`,
+                true,
+                true,
+                {
+                  data: data.supportedScopes,
+                  columns: [
+                    { data: "label", type: "string" },
+                    { data: "name", type: "string" },
+                  ],
+                  pageLength: 50,
+                }
+              );
+            } else if ($.fn.DataTable.isDataTable(this)) {
+              $(this).DataTable().columns.adjust();
+            }
+          });
+        }
+
+        if (data.actionOverrides && data.actionOverrides.length > 0) {
+          $(`#${tabId}-action-overrides-table`).each(function () {
+            if ($.fn.dataTable && !$.fn.dataTable.isDataTable(this)) {
+              initDataTableWithButtons(
+                `#${this.id}`,
+                `Action Overrides for ${data.name}`,
+                true,
+                true,
+                {
+                  data: data.actionOverrides,
+                  columns: [
+                    { data: "formFactor", type: "string" },
+                    { data: "isAvailableInTouch", type: "boolean" },
+                    { data: "name", type: "string" },
+                    { data: "page", render: renderXoomReference(true) },
+                    { data: "url", type: "string" },
+                  ],
+                  pageLength: 50,
+                }
+              );
+            } else if ($.fn.DataTable.isDataTable(this)) {
+              $(this).DataTable().columns.adjust();
+            }
+          });
+        }
 
         if (data.validationRules && data.validationRules.length > 0) {
           $(`#${tabId}-validation-rules-table`).each(function () {
@@ -340,13 +419,16 @@
       }
 
       function cleanupObjectDetailsDataTables(tabId) {
-        [`#${tabId}-fields-table`, `#${tabId}-validation-rules-table`].map(
-          (selector) => {
-            if ($.fn.DataTable.isDataTable(selector)) {
-              $(selector).DataTable().destroy();
-            }
+        [
+          `#${tabId}-fields-table`,
+          `#${tabId}-action-overrides-table`,
+          `#${tabId}-supported-scopes-table`,
+          `#${tabId}-validation-rules-table`,
+        ].map((selector) => {
+          if ($.fn.DataTable.isDataTable(selector)) {
+            $(selector).DataTable().destroy();
           }
-        );
+        });
       }
 
       // Create tabbed details manager for object schema
@@ -383,8 +465,10 @@
               { data: "name", render: renderObjectName },
               { data: "label" },
               { data: "keyPrefix" },
-              { data: null, render: renderFieldCount },
-              { data: null, render: renderValidationRuleCount },
+              { data: null, render: renderPropertyCount("fields") },
+              { data: null, render: renderPropertyCount("actionOverrides") },
+              { data: null, render: renderPropertyCount("supportedScopes") },
+              { data: null, render: renderPropertyCount("validationRules") },
               { data: "customObject", visible: false },
             ],
           }
