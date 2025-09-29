@@ -137,9 +137,9 @@ function renderXoomReference(includeType) {
         if (data.ref) {
           return (
             `<div class="ui green label">${data.value}` +
-            (includeType
-              ? `<div class="detail">${data.ref.split("[")[0]}</div>`
-              : "") +
+            (includeType ?
+              `<div class="detail">${data.ref.split("[")[0]}</div>`
+            : "") +
             "</div>"
           );
         } else if (data.unresolved) {

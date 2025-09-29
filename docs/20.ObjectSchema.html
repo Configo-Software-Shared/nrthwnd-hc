@@ -42,6 +42,8 @@
           <th>Key Prefix</th>
           <th>Fields</th>
           <th>Action Overrides</th>
+          <th>Child Relationships</th>
+          <th>Record Types</th>
           <th>Supported Scopes</th>
           <th>Validation Rules</th>
           <th>Customized</th>
@@ -98,6 +100,24 @@
             return count;
           }
         };
+      }
+
+      function renderOptionalValue(propertyName) {
+        return function (data, type, row, meta) {
+          if (!row || !row[propertyName]) {
+            return null;
+          }
+          return row[propertyName];
+        };
+      }
+
+      function decodePicklistText(value) {
+        // Safely decode URL-encoded sequences like %28 %29; fall back on original if invalid
+        try {
+          return decodeURIComponent(value);
+        } catch (e) {
+          return value;
+        }
       }
 
       // Object Schema specific content generation
@@ -257,6 +277,119 @@
           </table>`;
         }
 
+        let childRelationshipsSection = "";
+        if (data.childRelationships && data.childRelationships.length > 0) {
+          linksSection += `<div class="item"><a href="#${tabId}-child-relationships">Child Relationships</a></div>`;
+
+          childRelationshipsSection = `<h3 class='ui header' id='${tabId}-child-relationships'>Child Relationships<a href="#${tabId}" style="float: right; font-size: 0.8em; font-weight: normal;"><i class="up arrow icon"></i>top</a></h3>
+          <table id='${tabId}-child-relationships-table' class="ui celled table">
+            <thead>
+              <tr class="header">
+                <th>Child Object</th>
+                <th>Field</th>
+                <th>Name</th>
+                <th>Cascade Delete</th>
+                <th>Restricted Delete</th>
+                <th>Junction Object</th>
+              </tr>
+            </thead>
+          </table>`;
+        }
+
+        let recordTypesSection = "";
+        if (data.recordTypes && data.recordTypes.length > 0) {
+          linksSection += `<div class="item"><a href="#${tabId}-record-types">Record Types</a></div>`;
+
+          recordTypesSection = `<h3 class='ui header' id='${tabId}-record-types'>Record Types<a href="#${tabId}" style="float: right; font-size: 0.8em; font-weight: normal;"><i class="up arrow icon"></i>top</a></h3>
+          <table id='${tabId}-record-types-table' class="ui celled table">
+            <thead>
+              <tr class="header">
+                <th>Name</th>
+                <th>Developer Name</th>
+                <th>Active</th>
+                <th>Description</th>
+                <th>Default</th>
+                <th>Available</th>
+                <th>Master</th>
+                <th>Compact Layout</th>
+                <th>Business Process</th>
+              </tr>
+            </thead>
+          </table>`;
+        }
+
+        // Record Type Picklist Values matrix (semantic table, not a DataTable)
+        let recordTypePicklistsSection = "";
+        if (data.recordTypes && data.recordTypes.length > 0) {
+          const rtsWithPicklists = data.recordTypes.filter(
+            (rt) =>
+              Array.isArray(rt.picklistValues) && rt.picklistValues.length > 0
+          );
+          if (rtsWithPicklists.length > 0) {
+            linksSection += `<div class="item"><a href="#${tabId}-record-type-picklists">Record Type Picklists</a></div>`;
+
+            // Collect unique field API names across record types, then sort alphabetically
+            const fieldNameSet = new Set();
+            rtsWithPicklists.forEach((rt) => {
+              rt.picklistValues.forEach((pv) => {
+                if (pv && pv.field) {
+                  fieldNameSet.add(pv.field);
+                }
+              });
+            });
+            const fieldNames = Array.from(fieldNameSet).sort((a, b) =>
+              a.localeCompare(b)
+            );
+
+            // Build table header: first blank cell, then record type names as columns
+            const headerCells = ["<th>Field</th>"].concat(
+              rtsWithPicklists.map(
+                (rt) => `<th>${rt.name || rt.developerName}</th>`
+              )
+            );
+
+            // Build table body rows
+            const bodyRows = fieldNames
+              .map((fieldName) => {
+                const cells = rtsWithPicklists.map((rt) => {
+                  const match = rt.picklistValues.find(
+                    (pv) => pv.field === fieldName
+                  );
+                  if (
+                    !match ||
+                    !Array.isArray(match.values) ||
+                    match.values.length === 0
+                  ) {
+                    return "<td></td>";
+                  }
+                  const renderedValues = match.values
+                    .map((val) => {
+                      if (val && typeof val === "object" && "value" in val) {
+                        const v = decodePicklistText(String(val.value));
+                        return val.default ? `<b>${v}</b>` : v;
+                      }
+                      return decodePicklistText(String(val));
+                    })
+                    .join("<br/>");
+                  return `<td>${renderedValues}</td>`;
+                });
+                return `<tr><td>${fieldName}</td>${cells.join("")}</tr>`;
+              })
+              .join("");
+
+            recordTypePicklistsSection = `
+              <h3 class='ui header' id='${tabId}-record-type-picklists'>Record Type Picklists<a href="#${tabId}" style="float: right; font-size: 0.8em; font-weight: normal;"><i class="up arrow icon"></i>top</a></h3>
+              <table class="ui celled table">
+                <thead>
+                  <tr class="header">${headerCells.join("")}</tr>
+                </thead>
+                <tbody>
+                  ${bodyRows}
+                </tbody>
+              </table>`;
+          }
+        }
+
         let supportedScopesSection = "";
         if (data.supportedScopes && data.supportedScopes.length > 0) {
           linksSection += `<div class="item"><a href="#${tabId}-supported-scopes">Supported Scopes</a></div>`;
@@ -300,6 +433,9 @@
           fieldsSection +
           fieldsSectionFooter +
           actionOverridesSection +
+          childRelationshipsSection +
+          recordTypesSection +
+          recordTypePicklistsSection +
           supportedScopesSection +
           validationRulesSection
         );
@@ -328,29 +464,6 @@
           }
         });
 
-        if (data.supportedScopes && data.supportedScopes.length > 0) {
-          $(`#${tabId}-supported-scopes-table`).each(function () {
-            if ($.fn.dataTable && !$.fn.dataTable.isDataTable(this)) {
-              initDataTableWithButtons(
-                `#${this.id}`,
-                `Supported Scopes for ${data.name}`,
-                true,
-                true,
-                {
-                  data: data.supportedScopes,
-                  columns: [
-                    { data: "label", type: "string" },
-                    { data: "name", type: "string" },
-                  ],
-                  pageLength: 50,
-                }
-              );
-            } else if ($.fn.DataTable.isDataTable(this)) {
-              $(this).DataTable().columns.adjust();
-            }
-          });
-        }
-
         if (data.actionOverrides && data.actionOverrides.length > 0) {
           $(`#${tabId}-action-overrides-table`).each(function () {
             if ($.fn.dataTable && !$.fn.dataTable.isDataTable(this)) {
@@ -366,9 +479,163 @@
                     { data: "isAvailableInTouch", type: "boolean" },
                     { data: "name", type: "string" },
                     { data: "page", render: renderXoomReference(true) },
-                    { data: "url", type: "string" },
+                    {
+                      data: "url",
+                      type: "string",
+                      visible: data.actionOverrides.some(
+                        (override) => override.url
+                      ),
+                    },
                   ],
                   pageLength: 50,
+                }
+              );
+            } else if ($.fn.DataTable.isDataTable(this)) {
+              $(this).DataTable().columns.adjust();
+            }
+          });
+        }
+
+        if (data.childRelationships && data.childRelationships.length > 0) {
+          $(`#${tabId}-child-relationships-table`).each(function () {
+            if ($.fn.dataTable && !$.fn.dataTable.isDataTable(this)) {
+              initDataTableWithButtons(
+                `#${this.id}`,
+                `Child Relationships for ${data.name}`,
+                true,
+                true,
+                {
+                  data: data.childRelationships,
+                  columns: [
+                    {
+                      data: "childObject",
+                      render: function (value, type) {
+                        if (type === "display" && value) {
+                          return `<a class=\"ui primary basic label\" onclick=\"addAndDisplayDetails('${value}', false, false)\" ondblclick=\"addAndDisplayDetails('${value}', true, true)\"><i class=\"arrow right icon\"></i>${value}</a>`;
+                        }
+                        return value;
+                      },
+                    },
+                    { data: "field", type: "string" },
+                    {
+                      data: null,
+                      type: "string",
+                      render: renderOptionalValue("name"),
+                      visible: data.childRelationships.some(
+                        (relationship) => relationship.name
+                      ),
+                    },
+                    { data: "cascadeDelete", type: "boolean" },
+                    {
+                      data: null,
+                      type: "boolean",
+                      render: renderOptionalValue("restrictedDelete"),
+                      visible: data.childRelationships.some(
+                        (relationship) => relationship.restrictedDelete
+                      ),
+                    },
+                    {
+                      data: null,
+                      type: "string",
+                      render: renderOptionalValue("junctionObject"),
+                      visible: data.childRelationships.some(
+                        (relationship) => relationship.junction
+                      ),
+                    },
+                  ],
+                  pageLength: 20,
+                }
+              );
+            } else if ($.fn.DataTable.isDataTable(this)) {
+              $(this).DataTable().columns.adjust();
+            }
+          });
+        }
+
+        if (data.recordTypes && data.recordTypes.length > 0) {
+          $(`#${tabId}-record-types-table`).each(function () {
+            if ($.fn.dataTable && !$.fn.dataTable.isDataTable(this)) {
+              initDataTableWithButtons(
+                `#${this.id}`,
+                `Record Types for ${data.name}`,
+                true,
+                true,
+                {
+                  data: data.recordTypes,
+                  columns: [
+                    { data: "name", type: "string" },
+                    { data: "developerName", type: "string" },
+                    { data: "active", type: "boolean" },
+                    {
+                      data: null,
+                      type: "string",
+                      render: renderOptionalValue("description"),
+                      visible: data.recordTypes.some(
+                        (recordType) => recordType.description
+                      ),
+                    },
+                    {
+                      data: null,
+                      type: "boolean",
+                      render: renderOptionalValue("default"),
+                    },
+                    {
+                      data: null,
+                      type: "boolean",
+                      render: renderOptionalValue("available"),
+                      visible: data.recordTypes.some(
+                        (recordType) => recordType.available
+                      ),
+                    },
+                    {
+                      data: null,
+                      type: "boolean",
+                      render: renderOptionalValue("master"),
+                      visible: data.recordTypes.some(
+                        (recordType) => recordType.master
+                      ),
+                    },
+                    {
+                      data: null,
+                      type: "boolean",
+                      render: renderOptionalValue("compactLayout"),
+                      visible: data.recordTypes.some(
+                        (recordType) => recordType.compactLayout
+                      ),
+                    },
+                    {
+                      data: null,
+                      type: "string",
+                      render: renderOptionalValue("businessProcess"),
+                      visible: data.recordTypes.some(
+                        (recordType) => recordType.businessProcess
+                      ),
+                    },
+                  ],
+                  pageLength: 20,
+                }
+              );
+            } else if ($.fn.DataTable.isDataTable(this)) {
+              $(this).DataTable().columns.adjust();
+            }
+          });
+        }
+
+        if (data.supportedScopes && data.supportedScopes.length > 0) {
+          $(`#${tabId}-supported-scopes-table`).each(function () {
+            if ($.fn.dataTable && !$.fn.dataTable.isDataTable(this)) {
+              initDataTableWithButtons(
+                `#${this.id}`,
+                `Supported Scopes for ${data.name}`,
+                true,
+                true,
+                {
+                  data: data.supportedScopes,
+                  columns: [
+                    { data: "label", type: "string" },
+                    { data: "name", type: "string" },
+                  ],
+                  pageLength: 20,
                 }
               );
             } else if ($.fn.DataTable.isDataTable(this)) {
@@ -422,6 +689,8 @@
         [
           `#${tabId}-fields-table`,
           `#${tabId}-action-overrides-table`,
+          `#${tabId}-child-relationships-table`,
+          `#${tabId}-record-types-table`,
           `#${tabId}-supported-scopes-table`,
           `#${tabId}-validation-rules-table`,
         ].map((selector) => {
@@ -470,6 +739,16 @@
                 data: null,
                 type: "num",
                 render: renderPropertyCount("actionOverrides"),
+              },
+              {
+                data: null,
+                type: "num",
+                render: renderPropertyCount("childRelationships"),
+              },
+              {
+                data: null,
+                type: "num",
+                render: renderPropertyCount("recordTypes"),
               },
               {
                 data: null,
